@@ -73,7 +73,7 @@ const ServiceCard = ({ service, index }: { service: Service; index: number; key?
 
 import { supabase } from './supabase';
 import { SupabaseAuth } from './components/SupabaseAuth';
-import { DocManager } from './components/DocManager';
+import { NoteVault } from './components/NoteVault';
 import TodoList from './components/TodoList';
 
 const MainContent = ({ services, session }: { services: Service[]; session: any }) => {
@@ -143,7 +143,7 @@ const MainContent = ({ services, session }: { services: Service[]; session: any 
           </div>
         ) : (
           <div className="space-y-12">
-            <DocManager userId={user.id} />
+            <NoteVault userId={user.id} />
             <TodoList />
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
