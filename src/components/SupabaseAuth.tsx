@@ -18,6 +18,8 @@ export const SupabaseAuth = () => {
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'login' | 'signup'>('login');
 
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
   if (!supabase) return (
     <div className="glass-panel p-6 rounded-2xl border-amber-500/20 text-amber-500 text-xs font-mono">
       SUPABASE_KEY_MISSING: Configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in settings.
@@ -28,12 +30,21 @@ export const SupabaseAuth = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccessMsg(null);
 
-    const { error } = mode === 'login' 
+    const { data, error } = mode === 'login' 
       ? await supabase.auth.signInWithPassword({ email, password })
       : await supabase.auth.signUp({ email, password });
 
-    if (error) setError(error.message);
+    if (error) {
+      setError(error.message);
+    } else if (mode === 'signup') {
+      if (data.session) {
+        setSuccessMsg("Account linked successfully. Accessing grid...");
+      } else {
+        setSuccessMsg("Enrollment request received. Check your email for a verification link to activate your node.");
+      }
+    }
     setLoading(false);
   };
 
@@ -51,6 +62,7 @@ export const SupabaseAuth = () => {
       </div>
 
       <form onSubmit={handleAuth} className="space-y-4">
+        {/* ... existing email and password fields ... */}
         <div className="space-y-2">
           <label className="text-[10px] uppercase font-bold text-slate-500 tracking-widest pl-1">Identifier (Email)</label>
           <div className="relative">
@@ -73,6 +85,7 @@ export const SupabaseAuth = () => {
             <input 
               type="password" 
               required
+              min={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-black/40 border border-[#8305ec]/20 rounded-xl py-3 pl-12 pr-4 text-sm focus:border-[#8305ec] transition-all outline-none"
@@ -85,6 +98,13 @@ export const SupabaseAuth = () => {
           <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-start gap-3">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <p className="text-[9px] font-mono leading-relaxed uppercase">{error}</p>
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-start gap-3">
+            <Zap className="w-4 h-4 shrink-0 mt-0.5 animate-pulse" />
+            <p className="text-[9px] font-mono leading-relaxed uppercase">{successMsg}</p>
           </div>
         )}
 
