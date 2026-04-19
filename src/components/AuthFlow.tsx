@@ -7,18 +7,19 @@ import {
   linkWithPopup, 
   User,
   GoogleAuthProvider,
-  unlink
+  sendEmailVerification
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../firebase';
 import { motion, AnimatePresence } from 'motion/react';
-import { Shield, Lock, Mail, User as UserIcon, LogOut, Link as LinkIcon, AlertCircle, CheckCircle2, Globe } from 'lucide-react';
+import { Shield, Lock, Mail, User as UserIcon, LogOut, Link as LinkIcon, AlertCircle, CheckCircle2, Globe, Send, Zap } from 'lucide-react';
 
 export const AuthFlow = ({ onAuthenticated }: { onAuthenticated: (user: User | null) => void }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -27,7 +28,6 @@ export const AuthFlow = ({ onAuthenticated }: { onAuthenticated: (user: User | n
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       onAuthenticated(u);
-      setLoading(u ? false : false); // Keep loading state until we decide
       setLoading(false);
     });
     return unsubscribe;
@@ -43,15 +43,30 @@ export const AuthFlow = ({ onAuthenticated }: { onAuthenticated: (user: User | n
         // Create profile in Firestore
         await setDoc(doc(db, 'users', cred.user.uid), {
           userId: cred.user.uid,
-          displayName: email.split('@')[0],
+          username: username,
+          displayName: username,
           email: email,
           provider: 'password',
           createdAt: serverTimestamp()
         });
-        setSuccess("Infinity Account created successfully.");
+        // Send verification email
+        await sendEmailVerification(cred.user);
+        setSuccess("Account created. Please check your email for the verification link.");
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!user) return;
+    setError(null);
+    setSuccess(null);
+    try {
+      await sendEmailVerification(user);
+      setSuccess("Verification email resent.");
     } catch (err: any) {
       setError(err.message);
     }
@@ -71,6 +86,21 @@ export const AuthFlow = ({ onAuthenticated }: { onAuthenticated: (user: User | n
   };
 
   const handleSignOut = () => signOut(auth);
+
+  const handleReloadUser = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      await user.reload();
+      const updatedUser = auth.currentUser;
+      setUser(updatedUser);
+      onAuthenticated(updatedUser);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) return (
     <div className="flex items-center justify-center h-40">
@@ -101,9 +131,35 @@ export const AuthFlow = ({ onAuthenticated }: { onAuthenticated: (user: User | n
           <div className="flex items-center justify-between p-3 rounded-xl bg-cyber-purple/5 border border-cyber-purple/10">
             <div className="flex items-center gap-3">
               <Mail className="w-4 h-4 text-cyber-purple" />
-              <span className="text-xs font-semibold text-slate-300">Infinity Identity</span>
+              <div className="flex flex-col">
+                <span className="text-xs font-semibold text-slate-300">Email Status</span>
+                <span className={`text-[9px] uppercase font-bold ${user.emailVerified ? 'text-emerald-500' : 'text-amber-500'}`}>
+                  {user.emailVerified ? 'Verified' : 'Verification Required'}
+                </span>
+              </div>
             </div>
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            {user.emailVerified ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            ) : (
+              <div className="flex gap-2">
+                <button 
+                  onClick={handleResendVerification}
+                  className="text-[10px] uppercase font-black text-cyber-purple hover:neon-text-glow transition-all flex items-center gap-1"
+                  title="Resend verification email"
+                >
+                  <Send className="w-3 h-3" />
+                  Fix
+                </button>
+                <button 
+                  onClick={handleReloadUser}
+                  className="text-[10px] uppercase font-black text-slate-500 hover:text-white transition-all flex items-center gap-1"
+                  title="Check verification status"
+                >
+                  <Zap className="w-3 h-3" />
+                  Sync
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between p-3 rounded-xl bg-cyber-purple/5 border border-cyber-purple/10">
@@ -149,6 +205,23 @@ export const AuthFlow = ({ onAuthenticated }: { onAuthenticated: (user: User | n
       </div>
 
       <form onSubmit={handleAuth} className="space-y-4">
+        {mode === 'signup' && (
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-widest pl-1">Grid Callsign</label>
+            <div className="relative">
+              <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input 
+                type="text" 
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full bg-cyber-black border border-cyber-purple/20 rounded-xl py-3 pl-12 pr-4 text-sm focus:border-cyber-purple focus:neon-glow outline-none transition-all"
+                placeholder="Choose a username"
+              />
+            </div>
+          </div>
+        )}
+
         <div className="space-y-2">
           <label className="text-[10px] uppercase font-bold text-slate-500 tracking-widest pl-1">Grid Identifier</label>
           <div className="relative">

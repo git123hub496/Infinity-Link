@@ -12,9 +12,28 @@
   --color-cyber-text: #e2e8f0;
 }
 
+/* Theme State - Injected via App.tsx */
+.theme-matrix {
+  --color-cyber-purple: #10b981;
+  --color-cyber-black: #000;
+  --color-cyber-ink: #001a0a;
+}
+
+.theme-crimson {
+  --color-cyber-purple: #ef4444;
+  --color-cyber-black: #0a0000;
+  --color-cyber-ink: #1a0000;
+}
+
+.theme-ocean {
+  --color-cyber-purple: #0ea5e9;
+  --color-cyber-black: #00080f;
+  --color-cyber-ink: #000d1a;
+}
+
 @layer base {
   body {
-    @apply bg-cyber-black text-cyber-text font-sans antialiased overflow-hidden m-0 p-0;
+    @apply bg-cyber-black text-cyber-text font-sans antialiased overflow-hidden m-0 p-0 transition-colors duration-500;
   }
 }
 
@@ -33,13 +52,17 @@
     inset: 0;
     opacity: 0.05;
     pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l25.98 15v30L30 60 4.02 45V15z' fill-rule='evenodd' stroke='%238305ec' fill='none'/%3E%3C/svg%3E");
+    /* Hex stroke is hardcoded in SVG, but we overlay a blend mode for theme coloring */
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l25.98 15v30L30 60 4.02 45V15z' fill-rule='evenodd' stroke='%23ffffff' fill='none'/%3E%3C/svg%3E");
+    background-color: var(--color-cyber-purple);
+    background-blend-mode: overlay;
   }
 
   .glass-panel {
-    background: rgba(13, 2, 28, 0.8);
+    background: var(--color-cyber-ink);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(131, 5, 236, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 0 0 1px var(--color-cyber-purple)/10;
   }
 
   .neon-glow {

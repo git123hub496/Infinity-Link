@@ -8,6 +8,7 @@ service cloud.firestore {
 
     // Global Helpers
     function isSignedIn() { return request.auth != null; }
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
     function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
@@ -15,23 +16,27 @@ service cloud.firestore {
 
     // Logic for User Profiles
     function isValidUserProfile(data) {
-      return data.keys().hasAll(['userId', 'displayName', 'email', 'provider', 'createdAt'])
-             && data.keys().size() == 5
+      return data.keys().hasAll(['userId', 'username', 'displayName', 'email', 'provider', 'createdAt'])
+             && data.keys().size() >= 6
              && data.userId == request.auth.uid
+             && data.username is string && data.username.size() >= 3 && data.username.size() <= 30 && data.username.matches('^[a-zA-Z0-9_]+$')
              && data.displayName is string && data.displayName.size() <= 100
              && data.email is string && data.email.size() <= 256
-             && data.provider is string && data.provider.size() <= 50
-             && data.createdAt == request.time;
+             && ( !('theme' in data) || data.theme is string )
+             && ( !('photoURL' in data) || data.photoURL is string )
+             && data.provider is string && data.provider.size() <= 50;
     }
 
     match /users/{userId} {
       allow get: if isOwner(userId) && isValidId(userId);
-      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming());
-      allow update: if isOwner(userId) && isValidId(userId)
+      allow create: if isOwner(userId) && isValidId(userId) 
                     && isValidUserProfile(incoming())
-                    && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'provider'])
+                    && incoming().createdAt == request.time;
+      allow update: if isOwner(userId) && isValidId(userId)
+                    && isVerified()
+                    && isValidUserProfile(incoming())
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['username', 'displayName', 'provider', 'theme', 'photoURL', 'email'])
                     && incoming().userId == existing().userId
-                    && incoming().email == existing().email
                     && incoming().createdAt == existing().createdAt;
     }
   }

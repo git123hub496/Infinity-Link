@@ -16,7 +16,9 @@ import {
   Cpu,
   Zap,
   Info,
-  User as UserIcon
+  User as UserIcon,
+  Mail,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { services, Service } from './services';
 import { useState, useEffect } from 'react';
@@ -69,13 +71,15 @@ const ServiceCard = ({ service, index }: { service: Service; index: number; key?
   );
 };
 
-import { auth } from './firebase';
-import { User } from 'firebase/auth';
-import { AuthFlow } from './components/AuthFlow';
+import { supabase } from './supabase';
+import { SupabaseAuth } from './components/SupabaseAuth';
+import { DocManager } from './components/DocManager';
+import TodoList from './components/TodoList';
 
-const MainContent = ({ services, user }: { services: Service[]; user: User | null }) => {
+const MainContent = ({ services, session }: { services: Service[]; session: any }) => {
   const [epoch, setEpoch] = useState(Math.floor(Date.now() / 1000));
   const [showAuth, setShowAuth] = useState(false);
+  const user = session?.user || null;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -103,88 +107,51 @@ const MainContent = ({ services, user }: { services: Service[]; user: User | nul
               )}
             </h2>
             <p className="text-slate-400 text-sm">
-              {user ? 'System initialized. Authenticated secure session active.' : 'Security protocol active. Authentication required for module access.'}
+              {user ? 'Grid authenticated via Supabase.' : 'Security protocol active. Authentication required for module access.'}
             </p>
           </div>
         </div>
         <div className="text-left md:text-right font-mono text-xs text-cyber-purple/50 space-y-2">
           <p>EPOCH: {epoch}</p>
-          <p className="flex items-center md:justify-end gap-2 text-cyber-purple/30">
-            SECURE CHANNEL: TLS_AES_256
-            <Lock className="w-3 h-3" />
-          </p>
           <div className="pt-2 flex items-center md:justify-end gap-4">
             <button 
               onClick={() => setShowAuth(!showAuth)}
               className="px-4 py-1.5 rounded-lg cyber-glass border-cyber-purple/40 text-[10px] uppercase font-black text-cyber-purple hover:neon-glow transition-all flex items-center gap-2"
             >
               <UserIcon className="w-3 h-3" />
-              {user ? 'Identity Manager' : 'Authorize Access'}
+              {user ? 'Management' : 'Authorize'}
             </button>
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${user ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-red-500 shadow-[0_0_8px_#ef4444]'}`}></div>
-              <span className={`text-[10px] uppercase font-bold tracking-widest ${user ? 'text-emerald-500' : 'text-red-500'}`}>
-                {user ? 'Nodes: Active' : 'Access: Denied'}
-              </span>
-            </div>
+            {user && (
+              <button 
+                onClick={() => supabase?.auth.signOut()}
+                className="px-4 py-1.5 rounded-lg cyber-glass border-red-500/20 text-[10px] uppercase font-black text-red-500 hover:bg-red-500/10 transition-all"
+              >
+                Sign Out
+              </button>
+            )}
           </div>
         </div>
       </header>
 
       <AnimatePresence mode="wait">
-        {showAuth ? (
-          <motion.div
-            key="auth"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="mb-12"
-          >
-            <AuthFlow onAuthenticated={() => {}} />
-          </motion.div>
-        ) : user ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-            <AnimatePresence mode="popLayout">
+        {showAuth || !user ? (
+          <div className="space-y-8">
+            <SupabaseAuth />
+            {!user && (
+              <p className="text-[10px] text-center text-slate-500 font-mono">STANDBY_FOR_HANDSHAKE</p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-12">
+            <DocManager userId={user.id} />
+            <TodoList />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {services.map((service, idx) => (
                 <ServiceCard key={service.id} service={service} index={idx} />
               ))}
-            </AnimatePresence>
-
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="service-card border-dashed border-2 border-cyber-purple/20 rounded-2xl p-12 flex flex-col items-center justify-center group cursor-pointer hover:border-cyber-purple/40 hover:bg-cyber-purple/5 transition-all min-h-[300px]"
-            >
-              <div className="w-16 h-16 rounded-full border-2 border-cyber-purple/20 flex items-center justify-center mb-6 group-hover:border-cyber-purple group-hover:neon-glow transition-all">
-                <span className="text-3xl text-cyber-purple/30 group-hover:text-cyber-purple">+</span>
-              </div>
-              <div className="text-center space-y-2">
-                <p className="text-sm text-white font-bold uppercase tracking-widest group-hover:accent-text transition-colors">Add Module</p>
-                <p className="text-[10px] text-cyber-purple/40 font-mono">ENCRYPTED_DEPLOY_READY</p>
-              </div>
-            </motion.div>
+            </div>
           </div>
-        ) : (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex-1 flex flex-col items-center justify-center text-center space-y-8 py-20"
-          >
-            <div className="w-24 h-24 rounded-full border-4 border-cyber-purple/10 flex items-center justify-center relative">
-              <Lock className="w-10 h-10 text-cyber-purple/20" />
-              <div className="absolute inset-0 border-4 border-cyber-purple/20 border-t-transparent rounded-full animate-spin" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-2xl font-display font-bold text-white/40 uppercase tracking-tighter">Encrypted Protocol Active</h3>
-              <p className="text-slate-500 text-sm max-w-xs mx-auto">Please enroll or authenticate your Infinity Identity to access the service matrix.</p>
-            </div>
-            <button 
-              onClick={() => setShowAuth(true)}
-              className="px-10 py-4 bg-cyber-purple rounded-xl text-white text-xs font-black uppercase tracking-[0.2em] neon-glow hover:translate-y-[-2px] transition-all"
-            >
-              Initialize Authorization
-            </button>
-          </motion.div>
         )}
       </AnimatePresence>
 
@@ -209,24 +176,35 @@ const MainContent = ({ services, user }: { services: Service[]; user: User | nul
   );
 };
 
-import { onAuthStateChanged } from 'firebase/auth';
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
+    if (!supabase) {
+      setAuthLoading(false);
+      return;
+    }
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
       setAuthLoading(false);
     });
-    return unsubscribe;
+
+    // Listen for changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   if (authLoading) {
     return (
       <div className="h-screen bg-cyber-black flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-cyber-purple border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-[#8305ec] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -239,11 +217,11 @@ export default function App() {
       <div className="scanline" />
 
       {/* Atmospheric glow blobs */}
-      <div className="fixed top-[-10%] left-[-5%] w-[40%] h-[40%] bg-cyber-purple/10 rounded-full blur-[150px] pointer-events-none" />
-      <div className="fixed bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-cyber-purple/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="fixed top-[-10%] left-[-5%] w-[40%] h-[40%] bg-[#8305ec]/10 rounded-full blur-[150px] pointer-events-none" />
+      <div className="fixed bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-[#8305ec]/5 rounded-full blur-[150px] pointer-events-none" />
 
       <div className="flex justify-center h-full">
-        <MainContent services={services} user={user} />
+        <MainContent services={services} session={session} />
       </div>
     </div>
   );
