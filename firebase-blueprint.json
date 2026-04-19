@@ -1,0 +1,23 @@
+{
+  "entities": {
+    "userProfile": {
+      "title": "User Profile",
+      "description": "Metadata for an Infinity Cybersecurity account holder.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "provider": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "userProfile",
+      "description": "User account documents restricted to the owner."
+    }
+  }
+}
