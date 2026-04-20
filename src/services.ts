@@ -20,5 +20,13 @@ export const services: Service[] = [
     url: 'https://infinity-ai-workspace.vercel.app/',
     icon: 'Cpu',
     category: 'Intelligence',
+  },
+  {
+    id: 'infinity-photo',
+    name: 'Infinity Photo',
+    description: 'High-fidelity AI image generation system for visual content creation.',
+    url: 'https://infinity-photo.vercel.app/',
+    icon: 'Image',
+    category: 'Intelligence',
   }
 ];

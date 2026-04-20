@@ -10,6 +10,7 @@ import {
   Zap,
   Globe,
   Info,
+  Image,
   User as UserIcon,
   Mail,
   Settings as SettingsIcon
@@ -20,6 +21,7 @@ import { useState, useEffect } from 'react';
 const icons = {
   Cpu,
   Zap,
+  Image,
 };
 
 const ServiceCard = ({ service, index }: { service: Service; index: number; key?: string }) => {
