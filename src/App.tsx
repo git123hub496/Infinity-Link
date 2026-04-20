@@ -5,16 +5,10 @@
 
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  ShieldAlert, 
-  Lock, 
-  Activity, 
-  Headphones, 
-  Terminal, 
-  Globe, 
   Shield,
-  Layers,
   Cpu,
   Zap,
+  Globe,
   Info,
   User as UserIcon,
   Mail,
@@ -24,12 +18,8 @@ import { services, Service } from './services';
 import { useState, useEffect } from 'react';
 
 const icons = {
-  ShieldAlert,
-  Lock,
-  Activity,
-  Headphones,
-  Terminal,
-  Globe,
+  Cpu,
+  Zap,
 };
 
 const ServiceCard = ({ service, index }: { service: Service; index: number; key?: string }) => {
@@ -73,8 +63,6 @@ const ServiceCard = ({ service, index }: { service: Service; index: number; key?
 
 import { supabase } from './supabase';
 import { SupabaseAuth } from './components/SupabaseAuth';
-import { NoteVault } from './components/NoteVault';
-import TodoList from './components/TodoList';
 
 const MainContent = ({ services, session }: { services: Service[]; session: any }) => {
   const [epoch, setEpoch] = useState(Math.floor(Date.now() / 1000));
@@ -143,9 +131,6 @@ const MainContent = ({ services, session }: { services: Service[]; session: any 
           </div>
         ) : (
           <div className="space-y-12">
-            <NoteVault userId={user.id} />
-            <TodoList />
-            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {services.map((service, idx) => (
                 <ServiceCard key={service.id} service={service} index={idx} />

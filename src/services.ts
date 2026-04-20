@@ -14,27 +14,11 @@ export interface Service {
 
 export const services: Service[] = [
   {
-    id: 'threat-monitor',
-    name: 'Threat Sentinel',
-    description: 'Real-time global threat intelligence and monitoring dashboard.',
-    url: '#threat-monitor',
-    icon: 'ShieldAlert',
+    id: 'infinity-ai',
+    name: 'Infinity AI',
+    description: 'Autonomous intelligence workspace for cognitive enterprise automation.',
+    url: 'https://infinity-ai-workspace.vercel.app/',
+    icon: 'Cpu',
     category: 'Intelligence',
-  },
-  {
-    id: 'vault',
-    name: 'Infinity Vault',
-    description: 'Quantum-resistant encrypted storage for sensitive enterprise assets.',
-    url: '#vault',
-    icon: 'Lock',
-    category: 'Infrastructure',
-  },
-  {
-    id: 'audit',
-    name: 'Nerve Center',
-    description: 'Automated compliance auditing and vulnerability assessment.',
-    url: '#audit',
-    icon: 'Activity',
-    category: 'Defense',
   }
 ];
